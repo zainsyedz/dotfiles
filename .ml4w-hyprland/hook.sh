@@ -20,6 +20,8 @@ _protect .config/ohmyposh
 _protect .config/wal
 _protect .config/zshrc
 _protect .config/microsoft-edge-stable-flags.conf
+_protect .config/hypr/hypridle.conf
+_protect .ml4w-hyprland/hook.sh
 
 # You can add more command to get executed before the prepared Dotfiles 
 # will be copied to the target folder ~/dotfiles
