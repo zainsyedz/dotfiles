@@ -1,3 +1,4 @@
+# Testing commit
 # Define the directories
 CONFIG_DIR = .config
 ML4W_HYPRLAND_DIR = .ml4w-hyprland
