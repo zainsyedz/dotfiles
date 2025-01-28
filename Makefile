@@ -41,8 +41,8 @@ ml4w-hyprland-actual:
 	cd $(HOME)/zdotfiles && find $(ML4W_HYPRLAND_DIR) -type f -exec $(LN_CMD) $(HOME)/zdotfiles/{} $(HOME)/{} \;
 
 homedir-actual:
-	cd $(HOME)/zdotfiles && find $(HOMEDIR) -type d -exec mkdir -p $(HOME)/{} \;
-	cd $(HOME)/zdotfiles && find $(HOMEDIR) -type f -exec $(LN_CMD) $(HOME)/zdotfiles/{} $(HOME)/{} \;
+	cd $(HOME)/zdotfiles/$(HOMEDIR) && find . -type d -exec mkdir -p $(HOME)/{} \;
+	cd $(HOME)/zdotfiles/$(HOMEDIR) && find . -type f -exec $(LN_CMD) $(HOME)/zdotfiles/$(HOMEDIR)/{} $(HOME)/{} \;
 
 ssh-actual:
 	cd $(HOME)/zdotfiles && find $(SSH_DIR) -type d -exec mkdir -p $(HOME)/{} \;
