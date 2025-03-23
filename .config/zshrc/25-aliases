@@ -58,3 +58,6 @@ alias setkb='setxkbmap de;echo "Keyboard set back to de."'
 
 # Kitty
 #alias ssh="kitty +kitten ssh"
+
+# Kubernetes
+alias k='kubectl'
