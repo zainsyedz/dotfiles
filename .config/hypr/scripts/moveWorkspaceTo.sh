@@ -14,7 +14,8 @@ get_next_monitor() {
     elif [ $current_monitor_id -eq ${monitors[($monitor_count - 1)]} ]; then
         echo 0
     else
-        echo $current_monitor_id + 1
+        # echo $current_monitor_id + 1
+        echo $((current_monitor_id + 1))
     fi
 }
 
@@ -25,7 +26,7 @@ current_workspace=$(hyprctl activewindow -j | jq '.workspace.id')
 current_monitor_id=$(hyprctl activewindow -j | jq '.monitor')
 
 # Get all monitor ids
-monitors=( $(hyprctl monitors -j | jq -r ".[] | .id") )
+monitors=( $(hyprctl monitors -j | jq -r ".[] | .id" | sort -n)  )
 
 next_monitor_id=$(get_next_monitor)
 log_message "Moving to monitor with ID $next_monitor_id"
