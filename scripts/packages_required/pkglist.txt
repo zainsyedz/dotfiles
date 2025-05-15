@@ -1,3 +1,4 @@
+auto-cpufreq
 docker
 docker-compose
 fzf
@@ -26,3 +27,4 @@ ttf-fira-sans
 ttf-firacode-nerd
 ttf-jetbrains-mono-nerd
 vim
+yay
