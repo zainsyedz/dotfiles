@@ -294,7 +294,7 @@
   "group/links": {
     "orientation": "horizontal",
     "modules": [
-      //"custom/chatgpt",
+//      "custom/chatgpt",
       "custom/empty"
     ]
   },
@@ -404,5 +404,18 @@
       ""
     ],
     "scroll-step": 1
-  }
+  },
+  
+  // Power Profiles Daemon
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+    "tooltip": true,
+    "format-icons": {
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": ""
+    }
+  },
 }
