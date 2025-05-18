@@ -26,17 +26,17 @@
     // Modules Left
     "modules-left": [
         //"custom/appmenu",
-        "group/links",
+        //"group/links",
         //"wlr/taskbar",
         //"group/quicklinks",
         //"hyprland/window",
         "custom/empty",
-        "hyprland/window"
+        "hyprland/workspaces"
     ],
 
     // Modules Center
     "modules-center": [
-        "hyprland/workspaces"
+        "hyprland/window"
     ],
 
     // Modules Right    
