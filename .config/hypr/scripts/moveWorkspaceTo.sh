@@ -5,18 +5,41 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >&2
 }
 
+# get_next_monitor() {
+#     monitor_count=${#monitors[@]}
+#     log_message "Monitor count $monitor_count"
+#     if [ $monitor_count -eq 1 ]; then
+#         log_message "Only one monitor. Exiting"
+#         exit 0
+#     elif [ $current_monitor_id -eq ${monitors[($monitor_count - 1)]} ]; then
+#         echo 0
+#     else
+#         # echo $current_monitor_id + 1
+#         echo $((current_monitor_id + 1))
+#     fi
+# }
+
 get_next_monitor() {
     monitor_count=${#monitors[@]}
     log_message "Monitor count $monitor_count"
     if [ $monitor_count -eq 1 ]; then
         log_message "Only one monitor. Exiting"
         exit 0
-    elif [ $current_monitor_id -eq ${monitors[($monitor_count - 1)]} ]; then
-        echo 0
-    else
-        # echo $current_monitor_id + 1
-        echo $((current_monitor_id + 1))
     fi
+    
+    # Find current monitor index in the array
+    for i in "${!monitors[@]}"; do
+        if [ "${monitors[$i]}" -eq "$current_monitor_id" ]; then
+            # If we're at the last monitor, wrap to first
+            if [ $i -eq $((monitor_count - 1)) ]; then
+                echo "${monitors[0]}"
+            else
+                # Otherwise, get the next monitor from the array
+                echo "${monitors[$((i + 1))]}"
+            fi
+            return
+        fi
+    done
 }
 
 # Get the current active workspace

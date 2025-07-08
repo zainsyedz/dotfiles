@@ -35,15 +35,15 @@
     ],
 
     // Modules Center
-    "modules-center": [
-        "hyprland/window"
-    ],
+    //"modules-center": [
+        //"hyprland/window"
+    //],
 
     // Modules Right    
     "modules-right": [
         "custom/updates",
         "pulseaudio",
-//"backlight",
+        "backlight",
         //"bluetooth",
 //"network",
         "battery", 
