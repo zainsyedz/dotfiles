@@ -20,7 +20,7 @@
       "default": ""
     },
     "persistent-workspaces": {
-            "*": 1
+      "*": 5
     }
   },
 
@@ -43,6 +43,7 @@
 
   // Hyprland Window
   "hyprland/window": {
+    "max-length": 60,
     "rewrite": {
       "(.*) - Brave": "$1",
       "(.*) - Chromium": "$1",
@@ -87,8 +88,9 @@
     "return-type": "json",
     "exec": "~/.config/ml4w/scripts/updates.sh",
     "interval": 1800,
-    "on-click": "$(cat ~/.config/ml4w/settings/terminal.sh) --class dotfiles-floating -e ~/.config/ml4w/scripts/installupdates.sh",
-    "on-click-right": "~/.config/ml4w/settings/software.sh"
+    "signal": 1,
+    "hide-empty-text": true,
+    "on-click": "~/.config/ml4w/settings/installupdates.sh"
   },
 
   // Wallpaper
@@ -120,13 +122,6 @@
     "tooltip": false
   },
 
-  // ChatGPT Launcher
-  "custom/chatgpt": {
-    "format": " ",
-    "on-click": "~/.config/ml4w/settings/ai.sh",
-    "tooltip-format": "AI Support"
-  },
-
   // Calculator
   "custom/calculator": {
     "format": "",
@@ -153,7 +148,7 @@
 
   // Rofi Application Launcher
   "custom/appmenuicon": {
-    "format": "",
+    "format": "",
     "on-click": "sleep 0.2;rofi -show drun -replace",
     "on-click-right": "~/.config/hypr/scripts/keybindings.sh",
     "tooltip-format": "Left: Open the application launcher\nRight: Show all keybindings"
@@ -172,13 +167,17 @@
     "tooltip-format": "Left: Notifications\nRight: Do not disturb",
     "format": "{icon}",
     "format-icons": {
-      "notification": "<span foreground='red'><sup></sup></span>",
+      "notification":
+        "<span rise='8pt'><span foreground='red'><sup></sup></span></span>",
       "none": "",
-      "dnd-notification": "<span foreground='red'><sup></sup></span>",
+      "dnd-notification":
+        "<span rise='8pt'><span foreground='red'><sup></sup></span></span>",
       "dnd-none": "",
-      "inhibited-notification": "<span foreground='red'><sup></sup></span>",
+      "inhibited-notification":
+        "<span rise='8pt'><span foreground='red'><sup></sup></span></span>",
       "inhibited-none": "",
-      "dnd-inhibited-notification": "<span foreground='red'><sup></sup></span>",
+      "dnd-inhibited-notification":
+        "<span rise='8pt'><span foreground='red'><sup></sup></span></span>",
       "dnd-inhibited-none": ""
     },
     "return-type": "json",
@@ -187,14 +186,6 @@
     "on-click": "swaync-client -t -sw",
     "on-click-right": "swaync-client -d -sw",
     "escape": true
-  },
-
-  // Hyprshade
-  "custom/hyprshade": {
-    "format": "",
-    "tooltip-format": "Toggle Screen Shader",
-    "on-click": "sleep 0.5; ~/.config/hypr/scripts/hyprshade.sh",
-    "on-click-right": "sleep 0.5; ~/.config/hypr/scripts/hyprshade.sh rofi"
   },
 
   // Hypridle inhibitor
@@ -227,7 +218,7 @@
 
   // Clock
   "clock": {
-        "format": "{:%H:%M - %Od.%Om.%y}",
+    "format": "{:%H:%M %a}",
     "on-click": "flatpak run com.ml4w.calendar",
     "timezone": "",
     "tooltip": false
@@ -285,8 +276,7 @@
     "modules": [
       "custom/tools",
       "custom/cliphist",
-      //"custom/hypridle",
-      "idle_inhibitor",
+      "custom/hypridle",
       "custom/hyprshade"
     ]
   },
@@ -295,7 +285,7 @@
   "group/links": {
     "orientation": "horizontal",
     "modules": [
-//      "custom/chatgpt",
+      "custom/chatgpt",
       "custom/empty"
     ]
   },
@@ -346,6 +336,19 @@
     "format-icons": [" ", " ", " ", " ", " "]
   },
 
+  // Power Profiles Daemon
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+    "tooltip": true,
+    "format-icons": {
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": ""
+    }
+  },
+
   // Pulseaudio
   "pulseaudio": {
     // "scroll-step": 1, // %, can be a float
@@ -373,7 +376,7 @@
     "format-disabled": "",
     "format-off": "",
     "interval": 30,
-    "on-click": "blueman-manager",
+    "on-click": "sleep 0.1 && ~/.config/ml4w/settings/bluetooth.sh",
     "format-no-controller": ""
   },
 
@@ -405,27 +408,5 @@
       ""
     ],
     "scroll-step": 1
-  },
-  
-  // Power Profiles Daemon
-  "power-profiles-daemon": {
-    "format": "{icon}",
-    "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
-    "tooltip": true,
-    "format-icons": {
-      "default": "",
-      "performance": "",
-      "balanced": "",
-      "power-saver": ""
-    }
-  },
-  "idle_inhibitor": {
-    "format": "{icon}",
-    "format-icons": {
-        "activated": "",
-        "deactivated": ""
-    },
-    "exec": "~/.config/hypr/scripts/hypridle.sh status",
-    "on-click": "~/.config/hypr/scripts/hypridle.sh toggle"
-  },
+  }
 }

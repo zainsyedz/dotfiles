@@ -1,4 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": ["contributing.md", "guidelines.md"]
+  "instructions": ["contributing.md", "guidelines.md"],
+  "keybinds": {
+    "messages_page_up" : "ctrl+f",
+    "messages_page_down": "ctrl+b",
+  }
 }
