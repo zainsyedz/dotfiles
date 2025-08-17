@@ -6,7 +6,7 @@ HOMEDIR = homeDir
 SSH_DIR = .ssh
 
 # Define the symlink creation command with relative path
-LN_CMD = ln -sf
+LN_CMD = cp -fRv
 
 # Default target (dry-run)
 dry-run: dry-run-config dry-run-ml4w-hyprland dry-run-homedir dry-run-ssh
