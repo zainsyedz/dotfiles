@@ -1,0 +1,12 @@
+apache-tools
+auto-cpufreq
+jre
+microsoft-edge-stable-bin
+mongodb-tools-bin
+mongosh-bin
+mycli
+nautilus-open-any-terminal
+oh-my-posh-bin
+opencode-bin
+php-pear
+webapp-manager

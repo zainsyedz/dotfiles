@@ -1,0 +1,7 @@
+bat
+eza
+fastfetch
+tldr
+sushi
+meld
+fd
