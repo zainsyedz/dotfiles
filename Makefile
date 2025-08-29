@@ -1,7 +1,6 @@
 # Testing commit
 # Define the directories
 CONFIG_DIR = .config
-ML4W_HYPRLAND_DIR = .ml4w-hyprland
 HOMEDIR = homeDir
 SSH_DIR = .ssh
 
@@ -35,10 +34,6 @@ run-all: config-actual ml4w-hyprland-actual homedir-actual ssh-actual
 config-actual:
 	cd $(HOME)/zdotfiles && find $(CONFIG_DIR) -type d -exec mkdir -p $(HOME)/{} \;
 	cd $(HOME)/zdotfiles && find $(CONFIG_DIR) -type f -exec $(LN_CMD) $(HOME)/zdotfiles/{} $(HOME)/{} \;
-
-ml4w-hyprland-actual:
-	cd $(HOME)/zdotfiles && find $(ML4W_HYPRLAND_DIR) -type d -exec mkdir -p $(HOME)/{} \;
-	cd $(HOME)/zdotfiles && find $(ML4W_HYPRLAND_DIR) -type f -exec $(LN_CMD) $(HOME)/zdotfiles/{} $(HOME)/{} \;
 
 homedir-actual:
 	cd $(HOME)/zdotfiles/$(HOMEDIR) && find . -type d -exec mkdir -p $(HOME)/{} \;
