@@ -66,33 +66,25 @@ Structure your findings like this:
 ## Pattern Examples: [Pattern Type]
 
 ### Pattern 1: [Descriptive Name]
-**Found in**: `src/api/users.js:45-67`
+**Found in**: `src/api/users.ext:45-67`
 **Used for**: User listing with pagination
 
-```javascript
+```pseudocode
 // Pagination implementation example
-router.get('/users', async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
-  const offset = (page - 1) * limit;
+function getUsers(page = 1, limit = 20):
+    offset = (page - 1) * limit
+    users = database.query("SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+    total = database.count("SELECT COUNT(*) FROM users")
 
-  const users = await db.users.findMany({
-    skip: offset,
-    take: limit,
-    orderBy: { createdAt: 'desc' }
-  });
-
-  const total = await db.users.count();
-
-  res.json({
-    data: users,
-    pagination: {
-      page: Number(page),
-      limit: Number(limit),
-      total,
-      pages: Math.ceil(total / limit)
+    return {
+        data: users,
+        pagination: {
+            page: page,
+            limit: limit,
+            total: total,
+            pages: ceil(total / limit)
+        }
     }
-  });
-});
 ```
 
 **Key aspects**:
@@ -102,35 +94,30 @@ router.get('/users', async (req, res) => {
 - Handles defaults
 
 ### Pattern 2: [Alternative Approach]
-**Found in**: `src/api/products.js:89-120`
+**Found in**: `src/api/products.ext:89-120`
 **Used for**: Product listing with cursor-based pagination
 
-```javascript
+```pseudocode
 // Cursor-based pagination example
-router.get('/products', async (req, res) => {
-  const { cursor, limit = 20 } = req.query;
+function getProducts(cursor = null, limit = 20):
+    query = "SELECT * FROM products ORDER BY id ASC LIMIT ?"
+    params = [limit + 1]  # Fetch one extra to check if more exist
 
-  const query = {
-    take: limit + 1, // Fetch one extra to check if more exist
-    orderBy: { id: 'asc' }
-  };
+    if cursor:
+        query += " WHERE id > ?"
+        params.append(cursor)
 
-  if (cursor) {
-    query.cursor = { id: cursor };
-    query.skip = 1; // Skip the cursor itself
-  }
+    products = database.query(query, params)
+    hasMore = length(products) > limit
 
-  const products = await db.products.findMany(query);
-  const hasMore = products.length > limit;
+    if hasMore:
+        products = products[0:limit]  # Remove extra item
 
-  if (hasMore) products.pop(); // Remove the extra item
-
-  res.json({
-    data: products,
-    cursor: products[products.length - 1]?.id,
-    hasMore
-  });
-});
+    return {
+        data: products,
+        cursor: products[-1].id if products else null,
+        hasMore: hasMore
+    }
 ```
 
 **Key aspects**:
@@ -139,24 +126,19 @@ router.get('/products', async (req, res) => {
 - Stable pagination (no skipped items)
 
 ### Testing Patterns
-**Found in**: `tests/api/pagination.test.js:15-45`
+**Found in**: `tests/api/pagination.test.ext:15-45`
 
-```javascript
-describe('Pagination', () => {
-  it('should paginate results', async () => {
-    // Create test data
-    await createUsers(50);
+```pseudocode
+test "pagination returns correct results":
+    # Create test data
+    createUsers(50)
 
-    // Test first page
-    const page1 = await request(app)
-      .get('/users?page=1&limit=20')
-      .expect(200);
-
-    expect(page1.body.data).toHaveLength(20);
-    expect(page1.body.pagination.total).toBe(50);
-    expect(page1.body.pagination.pages).toBe(3);
-  });
-});
+    # Test first page
+    response = api.get("/users?page=1&limit=20")
+    assert response.status == 200
+    assert length(response.data) == 20
+    assert response.pagination.total == 50
+    assert response.pagination.pages == 3
 ```
 
 ### Which Pattern to Use?
@@ -166,38 +148,38 @@ describe('Pagination', () => {
 - Both include proper error handling (not shown for brevity)
 
 ### Related Utilities
-- `src/utils/pagination.js:12` - Shared pagination helpers
-- `src/middleware/validate.js:34` - Query parameter validation
+- `src/utils/pagination.ext:12` - Shared pagination helpers
+- `src/middleware/validate.ext:34` - Query parameter validation
 ```
 
 ## Pattern Categories to Search
 
 ### API Patterns
-- Route structure
-- Middleware usage
-- Error handling
-- Authentication
-- Validation
-- Pagination
+- Route structure and REST endpoints
+- Middleware usage and request pipelines
+- Error handling and exception management
+- Authentication and authorization
+- Input validation and sanitization
+- Pagination and response formatting
 
 ### Data Patterns
-- Database queries
-- Caching strategies
-- Data transformation
-- Migration patterns
+- Database queries (SQL, ORM, Eloquent, etc.)
+- Caching strategies (Redis, Memcached, etc.)
+- Data transformation and serialization
+- Migration patterns and schema changes
 
 ### Component Patterns
-- File organization
-- State management
-- Event handling
-- Lifecycle methods
-- Hooks usage
+- File organization and architecture
+- State management (Redux, Vuex, sessions, etc.)
+- Event handling and dispatching
+- Lifecycle methods and initialization
+- Hooks, middleware, or interceptors
 
 ### Testing Patterns
-- Unit test structure
-- Integration test setup
-- Mock strategies
-- Assertion patterns
+- Unit test structure (PHPUnit, Jest, etc.)
+- Integration test setup and fixtures
+- Mock strategies and test doubles
+- Assertion patterns and test helpers
 
 ## Important Guidelines
 

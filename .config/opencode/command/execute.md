@@ -40,7 +40,7 @@ If you encounter a mismatch:
 ## Verification Approach
 
 After implementing a phase:
-- Run the success criteria checks (usually `bun run check` covers everything)
+- Run the success criteria checks (usually `npm run check`, `yarn check` covers everything)
 - Fix any issues before proceeding
 - Update your progress in both the plan and your todos
 - Check off completed items in the plan file itself using Edit

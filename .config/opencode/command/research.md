@@ -106,9 +106,9 @@ Use the following metadata for the research document frontmatter:
      - Implementation details
      ...
 
-     ## Code References
-     - `path/to/file.py:123` - Description of what's there
-     - `another/file.ts:45-67` - Description of the code block
+      ## Code References
+      - `path/to/file.ext:123` - Description of what's there
+      - `another/file.ext:45-67` - Description of the code block
 
      ## Architecture Insights
      [Patterns, conventions, and design decisions discovered]

@@ -186,9 +186,9 @@ After structure approval:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Unit tests pass: `turbo test`
-- [ ] Type checking passes: `turbo check`
-- [ ] Integration tests pass: `turbo test-integration`
+- [ ] Unit tests pass: `npm test`, `yarn test`, or `composer test`
+- [ ] Type checking passes: `npm run type-check`, `yarn type-check`
+- [ ] Integration tests pass: `npm run test:integration`, `yarn test:integration`
 
 #### Manual Verification:
 - [ ] Feature works as expected when tested via UI
@@ -314,9 +314,9 @@ After structure approval:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All unit tests pass: `turbo test`
-- [ ] No linting errors: `turbo check`
-- [ ] API endpoint returns 200: `curl localhost:3001/auth/sign-in`
+- [ ] All unit tests pass: `npm test`, `yarn test`, or `composer test`
+- [ ] No linting errors: `npm run lint`, `yarn lint`, or `php -l`
+- [ ] API endpoint returns 200: `curl localhost:3000/api/auth/sign-in` or `curl localhost:8000/api/auth/sign-in`
 
 #### Manual Verification:
 - [ ] New feature appears correctly in the UI

@@ -71,9 +71,9 @@ Create comprehensive validation summary:
 ⚠️ Phase 3: [Name] - Partially implemented (see issues)
 
 ### Automated Verification Results
-✓ Build passes: `turbo build`
-✓ Tests pass: `turbo test`
-✗ Linting issues: `turbo check` (3 warnings)
+✓ Build passes: `npm run build`, `yarn build`, or `composer build`
+✓ Tests pass: `npm test`, `yarn test`, or `composer test`
+✗ Linting issues: `npm run lint`, `yarn lint`, or `php -l` (3 warnings)
 
 ### Code Review Findings
 

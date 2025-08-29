@@ -52,17 +52,17 @@ First, think deeply about the most effective search patterns for the requested f
 2. Optionally, use glob for file patterns
 3. LS and Glob your way to victory as well!
 
-### Refine by Language/Framework
-- **JavaScript/TypeScript**: Look in src/, lib/, components/, pages/, api/
-- **Python**: Look in src/, lib/, pkg/, module names matching feature
-- **Go**: Look in pkg/, internal/, cmd/
-- **General**: Check for feature-specific directories - I believe in you, you are a smart cookie :)
+### Refine by Common Directory Patterns
+- **Source code**: Look in src/, lib/, pkg/, source/, app/, core/, app/Models/, app/Services/
+- **Web/API**: Look in api/, routes/, endpoints/, controllers/, handlers/, app/Http/Controllers/
+- **Components**: Look in components/, views/, pages/, ui/, widgets/, resources/views/
+- **General**: Check for feature-specific directories and common naming patterns
 
 ### Common Patterns to Find
-- `*service*`, `*handler*`, `*controller*` - Business logic
-- `*test*`, `*spec*` - Test files
-- `*.config.*`, `*rc*` - Configuration
-- `*.d.ts`, `*.types.*` - Type definitions
+- `*service*`, `*handler*`, `*controller*`, `*manager*`, `*model*` - Business logic
+- `*test*`, `*spec*`, `*spec.rb*`, `*Test*`, `*Test.php*` - Test files
+- `*.config.*`, `*rc*`, `*conf*`, `*config.php*` - Configuration
+- `*.types.*`, `*.d.ts`, `*.h*`, `*.php` - Type definitions and classes
 - `README*`, `*.md` in feature dirs - Documentation
 
 ## Output Format
@@ -73,28 +73,28 @@ Structure your findings like this:
 ## File Locations for [Feature/Topic]
 
 ### Implementation Files
-- `src/services/feature.js` - Main service logic
-- `src/handlers/feature-handler.js` - Request handling
-- `src/models/feature.js` - Data models
+- `src/services/feature.ext` - Main service logic
+- `src/handlers/feature-handler.ext` - Request handling
+- `src/models/feature.ext` - Data models
 
 ### Test Files
-- `src/services/__tests__/feature.test.js` - Service tests
-- `e2e/feature.spec.js` - End-to-end tests
+- `src/services/__tests__/feature.test.ext` - Service tests
+- `e2e/feature.spec.ext` - End-to-end tests
 
 ### Configuration
-- `config/feature.json` - Feature-specific config
+- `config/feature.json` or `config/feature.php` - Feature-specific config
 - `.featurerc` - Runtime configuration
 
 ### Type Definitions
-- `types/feature.d.ts` - TypeScript definitions
+- `types/feature.ext` - Type definitions (e.g., .d.ts, .php, .py)
 
 ### Related Directories
 - `src/services/feature/` - Contains 5 related files
 - `docs/feature/` - Feature documentation
 
 ### Entry Points
-- `src/index.js` - Imports feature module at line 23
-- `api/routes.js` - Registers feature routes
+- `src/index.ext` - Imports feature module at line 23
+- `api/routes.ext` - Registers feature routes
 ```
 
 ## Important Guidelines
