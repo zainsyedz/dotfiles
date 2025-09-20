@@ -1,0 +1,500 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# zdotfiles-sync: sync dotfiles between repo (this dir) and $HOME
+# - Subcommands: push (repo -> home), pull (home -> repo)
+# - Flags:
+#   --dry-run         Show what would change, do not modify
+#   --no-confirm      Skip confirmation prompts (EXCEPT when --delete is used)
+#   --only <list>     Comma-separated or repeated: config,home,ssh
+#   --delete          Delete extra files in destination to match source
+#   --help            Show usage
+#
+# Behavior:
+# - Uses rsync only (no cp fallback). If rsync missing, exits with instruction.
+# - No symlinks stored: dereference with -L (copy file contents instead of links).
+# - SSH excludes: never transfer private keys (id_*, *.pem, *.key). id_*.pub allowed.
+# - Push copies all tracked immediate entries recursively for each section.
+# - Pull uses a depth-1 gate: only immediate entries already present in repo are synced
+#   from destination back to the repo; each such directory is synced to full depth.
+# - --delete prunes extras on the destination side within the scope of items being synced.
+#   It ALWAYS requires a prompt, even with --no-confirm.
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOME_DIR="${HOME}"
+
+REPO_CONFIG="$ROOT_DIR/.config"
+HOME_CONFIG="$HOME_DIR/.config"
+REPO_HOME="$ROOT_DIR/homeDir"
+HOME_HOME="$HOME_DIR"
+REPO_SSH="$ROOT_DIR/.ssh"
+HOME_SSH="$HOME_DIR/.ssh"
+
+# Defaults
+CMD=""
+DRY_RUN=0
+NO_CONFIRM=0
+WANT_DELETE=0
+# sections default to all unless --only provided
+ONLY_SECTIONS=()
+
+usage() {
+  cat <<'EOF'
+Usage: zdotfiles-sync <push|pull> [options]
+
+Options:
+  --dry-run           Show what would change, do not modify
+  --no-confirm        Skip confirmation prompts (EXCEPT when --delete is used)
+  --only <list>       Comma-separated or repeated: config,home,ssh
+  --delete            Delete extra files in destination to match source
+  --help              Show this help
+
+Notes:
+- Uses rsync only; will exit if rsync is not installed.
+- Pull is depth-1 gated: only entries already present in repo sections are synced back.
+- SSH excludes private keys (id_*, *.pem, *.key) in both directions; id_*.pub allowed.
+- --delete always requires a prompt regardless of --no-confirm.
+EOF
+}
+
+need_rsync() {
+  if ! command -v rsync >/dev/null 2>&1; then
+    echo "rsync not found — install rsync" >&2
+    exit 127
+  fi
+}
+
+add_only_sections() {
+  local list="$1"
+  IFS=',' read -r -a parts <<<"$list"
+  for p in "${parts[@]}"; do
+    case "$p" in
+      config|home|ssh) ONLY_SECTIONS+=("$p") ;;
+      "") ;; # ignore empty tokens
+      *) echo "Unknown section in --only: $p" >&2; exit 2 ;;
+    esac
+  done
+}
+
+parse_args() {
+  if [[ $# -lt 1 ]]; then usage; exit 2; fi
+  CMD="$1"; shift || true
+  case "$CMD" in
+    push|pull) ;;
+    -h|--help|help) usage; exit 0 ;;
+    *) echo "Unknown command: $CMD" >&2; usage; exit 2 ;;
+  esac
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --dry-run) DRY_RUN=1; shift ;;
+      --no-confirm) NO_CONFIRM=1; shift ;;
+      --only)
+        [[ $# -ge 2 ]] || { echo "--only requires a value" >&2; exit 2; }
+        add_only_sections "$2"; shift 2 ;;
+      --only=*) add_only_sections "${1#*=}"; shift ;;
+      --delete) WANT_DELETE=1; shift ;;
+      -h|--help) usage; exit 0 ;;
+      *) echo "Unknown option: $1" >&2; usage; exit 2 ;;
+    esac
+  done
+
+  # If no --only provided, select all
+  if [[ ${#ONLY_SECTIONS[@]} -eq 0 ]]; then
+    ONLY_SECTIONS=(config home ssh)
+  fi
+}
+
+confirm_delete_if_needed() {
+  if [[ "$WANT_DELETE" -eq 1 ]]; then
+    echo "WARNING: --delete will remove files on the destination that are not present in the source."
+    echo "This applies to the selected sections and items being synced."
+    local ans
+    read -r -p "Proceed with delete? [y/N] " ans || true
+    if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+      echo "Aborted by user." >&2
+      exit 130
+    fi
+  fi
+}
+
+confirm_if_needed() {
+  # --delete always prompts separately
+  if [[ "$WANT_DELETE" -eq 1 ]]; then
+    confirm_delete_if_needed
+    return
+  fi
+  if [[ "$NO_CONFIRM" -eq 1 ]]; then
+    return
+  fi
+  local ans
+  read -r -p "Proceed with sync? [y/N] " ans || true
+  if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+    echo "Aborted by user." >&2
+    exit 130
+  fi
+}
+
+# Build rsync options for preview or real run
+rsync_opts_common() {
+  local preview_flag="$1" # 1=preview, 0=real
+  local opts=(-aL -v --human-readable)
+  # Avoid updating destination dir mtime (less noisy)
+  opts+=(--omit-dir-times)
+  if [[ "$preview_flag" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
+    opts+=(-n)
+  fi
+  if [[ "$WANT_DELETE" -eq 1 ]]; then
+    opts+=(--delete)
+  fi
+  printf '%s\n' "${opts[@]}"
+}
+
+# Filters for SSH (exclude private keys, allow .pub)
+rsync_filters_ssh() {
+  printf '%s\n' "--include=id_*.pub" "--exclude=id_*" "--exclude=*.pem" "--exclude=*.key"
+}
+
+# List immediate children (names only) of a directory, if it exists
+list_children() {
+  local dir="$1"
+  [[ -d "$dir" ]] || return 0
+  # Use find to be robust, names only
+  find "$dir" -mindepth 1 -maxdepth 1 -printf '%f\n' 2>/dev/null | LC_ALL=C sort
+}
+
+# Print a header for a preview block
+preview_header() {
+  local direction="$1"; local section="$2"
+  echo "=== ${direction^^} preview for [$section] ==="
+}
+
+# Run rsync (preview or real) for a directory transfer
+sync_dir() {
+  local direction="$1" # push|pull
+  local section="$2"
+  local src="$3"
+  local dst="$4"
+  local preview_flag="$5" # 1=preview, 0=real
+  shift 5 || true
+  local extra=("$@")
+
+  local -a opts
+  # shellcheck disable=SC2207
+  opts=($(rsync_opts_common "$preview_flag"))
+  if [[ "$section" == "ssh" ]]; then
+    # shellcheck disable=SC2207
+    opts+=($(rsync_filters_ssh))
+  fi
+
+  # Ensure destination directory exists for both preview and real to avoid noisy errors
+  mkdir -p "$dst"
+
+  echo "[rsync $direction:$section] $src -> $dst"
+  rsync "${opts[@]}" "${extra[@]}" "$src/" "$dst/"
+}
+
+# Run rsync (preview or real) for a file transfer
+sync_file() {
+  local direction="$1" # push|pull
+  local section="$2"
+  local src="$3"
+  local dst="$4"
+  local preview_flag="$5" # 1=preview, 0=real
+
+  local -a opts
+  # shellcheck disable=SC2207
+  opts=($(rsync_opts_common "$preview_flag"))
+  if [[ "$section" == "ssh" ]]; then
+    # shellcheck disable=SC2207
+    opts+=($(rsync_filters_ssh))
+  fi
+
+  # Ensure destination parent exists
+  mkdir -p "$(dirname "$dst")"
+
+  echo "[rsync $direction:$section] $src -> $dst"
+  rsync "${opts[@]}" "$src" "$dst"
+}
+
+# For missing source with --delete, schedule deletion of destination
+preview_or_delete_missing() {
+  local path="$1"
+  local preview_flag="$2"
+  if [[ "$WANT_DELETE" -eq 1 ]]; then
+    if [[ "$preview_flag" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
+      echo "Would delete missing destination: $path"
+    else
+      echo "Deleting missing destination: $path"
+      rm -rf -- "$path"
+    fi
+  else
+    echo "Skip (source missing): $path"
+  fi
+}
+
+# Harden permissions for ~/.ssh after push
+harden_ssh() {
+  local target="$HOME_SSH"
+  [[ -d "$target" ]] || return 0
+  # Directories 700, files 600, .pub 644
+  find "$target" -type d -exec chmod 700 {} + 2>/dev/null || true
+  find "$target" -type f -name '*.pub' -exec chmod 644 {} + 2>/dev/null || true
+  find "$target" -type f ! -name '*.pub' -exec chmod 600 {} + 2>/dev/null || true
+}
+
+run_push_preview() {
+  echo "== Preparing push preview =="
+  for section in "${ONLY_SECTIONS[@]}"; do
+    preview_header "push" "$section"
+    case "$section" in
+      config)
+        while IFS= read -r name; do
+          local_src="$REPO_CONFIG/$name"
+          local_dst="$HOME_CONFIG/$name"
+          if [[ -d "$local_src" ]]; then
+            sync_dir push "$section" "$local_src" "$local_dst" 1
+          elif [[ -f "$local_src" ]]; then
+            sync_file push "$section" "$local_src" "$local_dst" 1
+          fi
+        done < <(list_children "$REPO_CONFIG")
+        ;;
+      home)
+        while IFS= read -r name; do
+          local_src="$REPO_HOME/$name"
+          local_dst="$HOME_HOME/$name"
+          if [[ -d "$local_src" ]]; then
+            sync_dir push "$section" "$local_src" "$local_dst" 1
+          elif [[ -f "$local_src" ]]; then
+            sync_file push "$section" "$local_src" "$local_dst" 1
+          fi
+        done < <(list_children "$REPO_HOME")
+        ;;
+      ssh)
+        while IFS= read -r name; do
+          local_src="$REPO_SSH/$name"
+          local_dst="$HOME_SSH/$name"
+          if [[ -d "$local_src" ]]; then
+            sync_dir push "$section" "$local_src" "$local_dst" 1
+          elif [[ -f "$local_src" ]]; then
+            sync_file push "$section" "$local_src" "$local_dst" 1
+          fi
+        done < <(list_children "$REPO_SSH")
+        ;;
+    esac
+  done
+}
+
+run_push_actual() {
+  echo "== Executing push =="
+  need_rsync
+  mkdir -p "$HOME_CONFIG" "$HOME_SSH"
+  for section in "${ONLY_SECTIONS[@]}"; do
+    case "$section" in
+      config)
+        while IFS= read -r name; do
+          local_src="$REPO_CONFIG/$name"
+          local_dst="$HOME_CONFIG/$name"
+          if [[ -d "$local_src" ]]; then
+            sync_dir push "$section" "$local_src" "$local_dst" 0
+          elif [[ -f "$local_src" ]]; then
+            sync_file push "$section" "$local_src" "$local_dst" 0
+          fi
+        done < <(list_children "$REPO_CONFIG")
+        ;;
+      home)
+        while IFS= read -r name; do
+          local_src="$REPO_HOME/$name"
+          local_dst="$HOME_HOME/$name"
+          if [[ -d "$local_src" ]]; then
+            sync_dir push "$section" "$local_src" "$local_dst" 0
+          elif [[ -f "$local_src" ]]; then
+            sync_file push "$section" "$local_src" "$local_dst" 0
+          fi
+        done < <(list_children "$REPO_HOME")
+        ;;
+      ssh)
+        mkdir -p "$HOME_SSH"
+        while IFS= read -r name; do
+          local_src="$REPO_SSH/$name"
+          local_dst="$HOME_SSH/$name"
+          if [[ -d "$local_src" ]]; then
+            sync_dir push "$section" "$local_src" "$local_dst" 0
+          elif [[ -f "$local_src" ]]; then
+            sync_file push "$section" "$local_src" "$local_dst" 0
+          fi
+        done < <(list_children "$REPO_SSH")
+        harden_ssh
+        ;;
+    esac
+  done
+}
+
+run_pull_preview() {
+  echo "== Preparing pull preview (depth-1 gate) =="
+  for section in "${ONLY_SECTIONS[@]}"; do
+    preview_header "pull" "$section"
+    case "$section" in
+      config)
+        while IFS= read -r name; do
+          local_src="$HOME_CONFIG/$name"
+          local_dst="$REPO_CONFIG/$name"
+          if [[ -d "$REPO_CONFIG/$name" ]]; then
+            if [[ -d "$local_src" ]]; then
+              sync_dir pull "$section" "$local_src" "$local_dst" 1
+            else
+              preview_or_delete_missing "$local_dst" 1
+            fi
+          elif [[ -f "$REPO_CONFIG/$name" ]]; then
+            if [[ -f "$local_src" ]]; then
+              sync_file pull "$section" "$local_src" "$local_dst" 1
+            else
+              preview_or_delete_missing "$local_dst" 1
+            fi
+          fi
+        done < <(list_children "$REPO_CONFIG")
+        ;;
+      home)
+        while IFS= read -r name; do
+          local_src="$HOME_HOME/$name"
+          local_dst="$REPO_HOME/$name"
+          if [[ -d "$REPO_HOME/$name" ]]; then
+            if [[ -d "$local_src" ]]; then
+              sync_dir pull "$section" "$local_src" "$local_dst" 1
+            else
+              preview_or_delete_missing "$local_dst" 1
+            fi
+          elif [[ -f "$REPO_HOME/$name" ]]; then
+            if [[ -f "$local_src" ]]; then
+              sync_file pull "$section" "$local_src" "$local_dst" 1
+            else
+              preview_or_delete_missing "$local_dst" 1
+            fi
+          fi
+        done < <(list_children "$REPO_HOME")
+        ;;
+      ssh)
+        while IFS= read -r name; do
+          local_src="$HOME_SSH/$name"
+          local_dst="$REPO_SSH/$name"
+          if [[ -d "$REPO_SSH/$name" ]]; then
+            if [[ -d "$local_src" ]]; then
+              sync_dir pull "$section" "$local_src" "$local_dst" 1
+            else
+              preview_or_delete_missing "$local_dst" 1
+            fi
+          elif [[ -f "$REPO_SSH/$name" ]]; then
+            if [[ -f "$local_src" ]]; then
+              sync_file pull "$section" "$local_src" "$local_dst" 1
+            else
+              preview_or_delete_missing "$local_dst" 1
+            fi
+          fi
+        done < <(list_children "$REPO_SSH")
+        ;;
+    esac
+  done
+}
+
+run_pull_actual() {
+  echo "== Executing pull (depth-1 gate) =="
+  need_rsync
+  mkdir -p "$REPO_CONFIG" "$REPO_HOME" "$REPO_SSH"
+  for section in "${ONLY_SECTIONS[@]}"; do
+    case "$section" in
+      config)
+        while IFS= read -r name; do
+          local_src="$HOME_CONFIG/$name"
+          local_dst="$REPO_CONFIG/$name"
+          if [[ -d "$REPO_CONFIG/$name" ]]; then
+            if [[ -d "$local_src" ]]; then
+              sync_dir pull "$section" "$local_src" "$local_dst" 0
+            else
+              preview_or_delete_missing "$local_dst" 0
+            fi
+          elif [[ -f "$REPO_CONFIG/$name" ]]; then
+            if [[ -f "$local_src" ]]; then
+              sync_file pull "$section" "$local_src" "$local_dst" 0
+            else
+              preview_or_delete_missing "$local_dst" 0
+            fi
+          fi
+        done < <(list_children "$REPO_CONFIG")
+        ;;
+      home)
+        while IFS= read -r name; do
+          local_src="$HOME_HOME/$name"
+          local_dst="$REPO_HOME/$name"
+          if [[ -d "$REPO_HOME/$name" ]]; then
+            if [[ -d "$local_src" ]]; then
+              sync_dir pull "$section" "$local_src" "$local_dst" 0
+            else
+              preview_or_delete_missing "$local_dst" 0
+            fi
+          elif [[ -f "$REPO_HOME/$name" ]]; then
+            if [[ -f "$local_src" ]]; then
+              sync_file pull "$section" "$local_src" "$local_dst" 0
+            else
+              preview_or_delete_missing "$local_dst" 0
+            fi
+          fi
+        done < <(list_children "$REPO_HOME")
+        ;;
+      ssh)
+        while IFS= read -r name; do
+          local_src="$HOME_SSH/$name"
+          local_dst="$REPO_SSH/$name"
+          if [[ -d "$REPO_SSH/$name" ]]; then
+            if [[ -d "$local_src" ]]; then
+              sync_dir pull "$section" "$local_src" "$local_dst" 0
+            else
+              preview_or_delete_missing "$local_dst" 0
+            fi
+          elif [[ -f "$REPO_SSH/$name" ]]; then
+            if [[ -f "$local_src" ]] ; then
+              sync_file pull "$section" "$local_src" "$local_dst" 0
+            else
+              preview_or_delete_missing "$local_dst" 0
+            fi
+          fi
+        done < <(list_children "$REPO_SSH")
+        ;;
+    esac
+  done
+}
+
+main() {
+  parse_args "$@"
+  need_rsync
+
+  # Always show a preview first (even if --no-confirm). If --dry-run, exit after preview.
+  case "$CMD" in
+    push)
+      run_push_preview
+      ;;
+    pull)
+      run_pull_preview
+      ;;
+  esac
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "(dry-run) No changes made."
+    exit 0
+  fi
+
+  # Prompt: --delete always prompts; otherwise skip if --no-confirm
+  confirm_if_needed
+
+  case "$CMD" in
+    push)
+      run_push_actual
+      ;;
+    pull)
+      run_pull_actual
+      ;;
+  esac
+
+  echo "Done."
+}
+
+main "$@"
