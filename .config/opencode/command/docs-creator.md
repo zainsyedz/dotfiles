@@ -12,7 +12,7 @@ Read the <folder> to know the folder and any specific documentation requirements
 
 ## Standard Documents to Generate
 
-Unless the user specifies only to generate specific documentation, generate the following documents, but not limited to them, but not limited to them
+Unless the user specifies only to generate specific documentation, generate the following documents, but not limited to them
 
    - ARCHITECTURE.md: High-level system architecture with diagrams.
    - FOLDER-STRUCTURE.md: Repository folder structure and rationale.
@@ -29,14 +29,14 @@ Unless the user specifies only to generate specific documentation, generate the 
    - TOC.md: Table of contents
    - INTEGRATIONS.md: External integrations
 
-If you find any other documents need to be created apart from these, prompt the user ONLY after finishing all tasks.
-If any of the files are becoming too large, divide them into multiple and put them in a folder with the same name
+If you find any other documents that need to be created apart from these, prompt the user ONLY after finishing all the steps.
+If any of the files are becoming too large, divide them into multiple files and put them in a folder with the same name
 For e.g.,
    FRAMEWORK.md can have a high level overview of the framework, and framework folder contains the findings further into their respective files, like CODING-PATTERNS.md, DEPENDENCIES.md, etc 
 
 ## Steps to follow after receiving the research query:
 
-1. **Understand the codebase folder structure and files names first:**
+1. **Understand the codebase folder structure and files first:**
    - **IMPORTANT**: For each document, identify components patterns and concepts to investigate
    - **CRITICAL**: Understand the folder structure in the main context before spawning any sub-tasks
    - This ensures you have full context before decomposing the research
@@ -96,7 +96,7 @@ For e.g.,
    - Ask if they have follow-up questions or need clarification
 
 7. **Handle follow-up questions:**
-   - If the user has follow-up questions, analyze the question and do more research if required and newly found information to the relevant documents. 
+   - If the user has follow-up questions, analyze the question and do more research if required and add newly found information to the relevant documents. 
    - Spawn new sub-agents as needed for additional investigation
    - Continue updating the documents and syncing
 
@@ -106,18 +106,20 @@ For e.g.,
 - Always run fresh codebase research - never rely solely on existing research documents
 - The thoughts/architecture directory contains important information about the codebase details
 - Focus on finding concrete file paths and line numbers for developer reference
-- Research documents should be self-contained with all necessary context
+- Include diagrams(e.g., Mermaid/UML) for architecture.md and code-flow.md. And any other documents where it seems necessary for clarity
 - Each sub-agent prompt should be specific and focused on read-only operations
+- If <folder> mentions files explicitly, FULLY read those files(with no offset/limit).
 - Consider cross-component connections and architectural patterns
 - Include temporal context (when the research was conducted)
 - Keep the main agent focused on synthesis, not deep file reading
 - Encourage sub-agents to find examples and usage patterns, not just definitions
-- Explore all of thoughts/ directory, not just research subdirectory
-- **File reading**: Always read mentioned files FULLY (no limit/offset) before spawning sub-tasks
 - **Critical ordering**: Follow the numbered steps exactly
   - ALWAYS read mentioned files first before spawning sub-tasks (step 1)
   - ALWAYS wait for all sub-agents to complete before synthesizing (step 4)
   - ALWAYS gather metadata before writing the document (step 5 before step 6)
   - NEVER write the research document with placeholder values
+- Documentation best practicies:
+  - Use Markdown for all files
+  - Keep documents concise and make them developer-focused
 
 <folder>$ARGUMENTS</folder>
