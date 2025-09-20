@@ -36,17 +36,40 @@
 #network,
 #bluetooth,
 #pulseaudio,
-#clock,
 #power-profiles-daemon,
-#custom-omarchy {
+#custom-omarchy,
+#custom-screenrecording-indicator,
+#custom-update {
   min-width: 12px;
   margin: 0 7.5px;
 }
 
 #custom-expand-icon {
-  margin-right: 10px;
+  margin-right: 7px;
 }
 
 tooltip {
   padding: 2px;
+}
+
+#custom-update {
+  font-size: 10px;
+}
+
+#clock {
+  margin-left: 8.75px;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+#custom-screenrecording-indicator {
+  min-width: 12px;
+  margin-left: 8.75px;
+  font-size: 10px;
+}
+
+#custom-screenrecording-indicator.active {
+  color: #a55555;
 }
