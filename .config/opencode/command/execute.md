@@ -13,6 +13,7 @@ You are tasked with implementing an approved technical plan from `thoughts/plans
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
 - Create a todo list to track your progress
+- Add the todo list at the end of the <plan> file marking it clearly after each step
 - Start implementing if you understand what needs to be done
 
 ## Implementation Philosophy
