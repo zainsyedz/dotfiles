@@ -9,10 +9,11 @@
     "playwright": {
       "type": "local",
       "command": [
-        "npx",
-        "@playwright/mcp@latest"
+        "mcp-server-playwright",
+        "--browser",
+        "chromium"
       ],
-      "enabled": false
+      "enabled": true
     },
       "context7": {
       "type": "remote",
