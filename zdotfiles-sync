@@ -17,6 +17,8 @@ set -euo pipefail
 # - Push copies all tracked immediate entries recursively for each section.
 # - Pull uses a depth-1 gate: only immediate entries already present in repo are synced
 #   from destination back to the repo; each such directory is synced to full depth.
+#   During pull, respects ignore files in this order: .zdotfilesignore, .ignore, .gitignore
+#   All found ignore files are applied; patterns are excluded from being pulled.
 # - --delete prunes extras on the destination side within the scope of items being synced.
 #   It ALWAYS requires a prompt, even with --no-confirm.
 
@@ -35,6 +37,8 @@ CMD=""
 DRY_RUN=0
 NO_CONFIRM=0
 WANT_DELETE=0
+# Ignore files to check (in order of precedence)
+IGNORE_FILES=(".zdotfilesignore" ".ignore" ".gitignore")
 # sections default to all unless --only provided
 ONLY_SECTIONS=()
 
@@ -52,6 +56,7 @@ Options:
 Notes:
 - Uses rsync only; will exit if rsync is not installed.
 - Pull is depth-1 gated: only entries already present in repo sections are synced back.
+- During pull, respects ignore files: .zdotfilesignore, .ignore, .gitignore (all applied).
 - SSH excludes private keys (id_*, *.pem, *.key) in both directions; id_*.pub allowed.
 - --delete always requires a prompt regardless of --no-confirm.
 EOF
@@ -155,6 +160,19 @@ rsync_filters_ssh() {
   printf '%s\n' "--include=id_*.pub" "--exclude=id_*" "--exclude=*.pem" "--exclude=*.key"
 }
 
+# Find all ignore files in source directory and return them as array
+get_ignore_files() {
+  local src_dir="$1"
+  local found=()
+  for ignore_name in "${IGNORE_FILES[@]}"; do
+    local ignore_path="$src_dir/$ignore_name"
+    if [[ -f "$ignore_path" ]]; then
+      found+=("$ignore_path")
+    fi
+  done
+  printf '%s\n' "${found[@]}"
+}
+
 # List immediate children (names only) of a directory, if it exists
 list_children() {
   local dir="$1"
@@ -185,6 +203,19 @@ sync_dir() {
   if [[ "$section" == "ssh" ]]; then
     # shellcheck disable=SC2207
     opts+=($(rsync_filters_ssh))
+  fi
+
+  # During pull, check for ignore files in source and apply exclusions
+  if [[ "$direction" == "pull" ]]; then
+    local -a ignore_files
+    # shellcheck disable=SC2207
+    IFS=$'\n' ignore_files=($(get_ignore_files "$src"))
+    if [[ ${#ignore_files[@]} -gt 0 ]]; then
+      for ignore_file in "${ignore_files[@]}"; do
+        opts+=("--exclude-from=$ignore_file")
+        echo "[Using ignore file: $ignore_file]"
+      done
+    fi
   fi
 
   # Ensure destination directory exists for both preview and real to avoid noisy errors
