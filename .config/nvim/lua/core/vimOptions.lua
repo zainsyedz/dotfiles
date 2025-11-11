@@ -100,3 +100,4 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.hl.on_yank()
   end,
 })
+vim.g.lazyvim_check_order = false
