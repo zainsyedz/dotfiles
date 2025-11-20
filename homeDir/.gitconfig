@@ -31,3 +31,6 @@
 	prune = true
 [pull]
 	rebase = true
+[core]
+	autocrlf = input
+	eol = lf
