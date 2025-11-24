@@ -46,3 +46,6 @@ font-family = JetBrainsMono Nerd Font
 background-opacity = 0.8
 confirm-close-surface = false
 #async-backend = epoll
+
+# Slowdown mouse scrolling
+mouse-scroll-multiplier = 0.95
