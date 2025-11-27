@@ -7,8 +7,8 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
-vim.keymap.set('n', '<C-v>', '<C-w><C-v>', { desc = 'Split pane vertically' })
-vim.keymap.set('n', '<C-s>', '<C-w><C-s>', { desc = 'Split pane horizontally' })
+vim.keymap.set('n', '<C-v>', '<C-w>v', { desc = 'Split pane vertically' })
+vim.keymap.set('n', '<C-s>', '<C-w>s', { desc = 'Split pane horizontally' })
 
 -- Keybinds for tabs
 vim.keymap.set('n', '<leader>to', '<cmd>tabnew<CR>', { desc = 'Open New Tab' }) -- open new tab
