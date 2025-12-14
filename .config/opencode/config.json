@@ -2,17 +2,16 @@
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["contributing.md", "guidelines.md"],
   "keybinds": {
-    "messages_page_up" : "ctrl+f",
-    "messages_page_down": "ctrl+b",
+    "messages_page_up" : "ctrl+b",
+    "messages_page_down": "ctrl+f",
   },
   "mcp": {
     "playwright": {
       "type": "local",
       "command": [
-        "npx",
-        "@playwright/mcp@latest"
+        "mcp-server-playwright"
       ],
-      "enabled": false
+      "enabled": true
     },
       "context7": {
       "type": "remote",
