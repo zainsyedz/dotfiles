@@ -190,7 +190,7 @@ return {
       helm_ls = require 'lspconfig.helm',
       dockerls = require 'lspconfig.dockerls',
       ts_ls = vim.tbl_deep_extend('force', require 'lspconfig.typescript', load_project_specific_settings 'ts_ls'),
-      mdx_analyzer = {},
+      -- mdx_analyzer = require 'lspconfig.mdx_analyzer',
     }
 
     -- Ensure the servers and tools above are installed
