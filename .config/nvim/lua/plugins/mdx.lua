@@ -3,4 +3,3 @@ return {
   dependencies = { 'nvim-treesitter/nvim-treesitter' },
   ft = { 'mdx' },
 }
-
