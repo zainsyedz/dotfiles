@@ -15,3 +15,12 @@ vim.keymap.set('n', '<leader>to', '<cmd>tabnew<CR>', { desc = 'Open New Tab' }) 
 vim.keymap.set('n', '<leader>tx', '<cmd>tabclose<CR>', { desc = 'Close Current New Tab' }) -- close current tab
 vim.keymap.set('n', '<leader>tn', '<cmd>tabn<CR>', { desc = 'Go to next tab' }) -- Go to next tab
 vim.keymap.set('n', '<leader>tp', '<cmd>tabp<CR>', { desc = 'Go to previous  tab' }) -- Go to previous tab
+
+-- Copy file reference (filename:line_number) to clipboard
+vim.keymap.set('n', '<leader>gr', function()
+  local file = vim.fn.expand('%')
+  local line = vim.fn.line('.')
+  local reference = file .. ':' .. line
+  vim.fn.setreg('+', reference)
+  vim.notify('Copied: ' .. reference, vim.log.levels.INFO)
+end, { desc = 'Grab reference (copy file:line to clipboard)' })

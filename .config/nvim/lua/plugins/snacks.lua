@@ -3,6 +3,7 @@ return {
   opts = {
     indent = { enabled = true },
     animate = { enabled = true },
+    notifier = { enabled = true },
     dashboard = {
       preset = {
         header = [[

@@ -190,6 +190,7 @@ return {
       helm_ls = require 'lspconfig.helm',
       dockerls = require 'lspconfig.dockerls',
       ts_ls = vim.tbl_deep_extend('force', require 'lspconfig.typescript', load_project_specific_settings 'ts_ls'),
+      yamlls = require 'lspconfig.yamlls',
       -- mdx_analyzer = require 'lspconfig.mdx_analyzer',
     }
 
@@ -206,6 +207,7 @@ return {
     local ensure_installed = vim.tbl_keys(servers or {})
     vim.list_extend(ensure_installed, {
       'stylua', -- Used to format Lua code
+      'yamlls',
     })
     require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
