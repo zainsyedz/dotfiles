@@ -51,6 +51,9 @@ vim.opt.breakindent = true
 -- Save undo history
 vim.opt.undofile = true
 
+-- Automatically reload files changed outside Neovim
+vim.opt.autoread = true
+
 -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
@@ -100,4 +103,15 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.hl.on_yank()
   end,
 })
+
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI' }, {
+  desc = 'Auto-reload files changed outside Neovim',
+  group = vim.api.nvim_create_augroup('auto-checktime', { clear = true }),
+  command = "if mode() != 'c' | checktime | endif",
+})
+
 vim.g.lazyvim_check_order = false
+
+-- Check for treesitter matchup issues
+vim.g.matchup_matchparen_deferred = 1
+vim.g.matchup_treesitter_enabled = 0

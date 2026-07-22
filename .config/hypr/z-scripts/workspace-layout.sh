@@ -22,11 +22,12 @@ sleep 0.5
 hyprctl dispatch togglegroup
 sleep 0.5
 hyprctl dispatch exec "gtk-launch Teams.desktop"
-sleep 0.5
+sleep 1
 
 # Workspace 3: Terminal with tmux
 hyprctl dispatch workspace 3
-hyprctl dispatch exec "kitty -e bash -c 'tmux attach || tmux'"
+# hyprctl dispatch exec "kitty -e bash -c 'tmux attach || tmux'"
+hyprctl dispatch exec -- kitty -- herdr
 sleep 0.5
 
 # Workspace 6: Grok

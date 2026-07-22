@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(
+  herdr workspace list \
+    | jq -r '.result.workspaces[] | [((if .focused then "*" else " " end) + (.number | tostring)), .label, .workspace_id, ((.pane_count | tostring) + "p/" + (.tab_count | tostring) + "t")] | @tsv' \
+    | fzf --reverse --prompt='Workspace: ' --with-nth=1,2,4
+)"
+
+if [ -z "$choice" ]; then
+  exit 0
+fi
+
+IFS=$'\t' read -r _number _label workspace_id _meta <<< "$choice"
+
+exec herdr workspace focus "$workspace_id"

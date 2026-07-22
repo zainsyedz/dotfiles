@@ -34,3 +34,4 @@
 [core]
 	autocrlf = input
 	eol = lf
+	attributesFile = /home/zain/.gitattributes_global

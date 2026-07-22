@@ -14,6 +14,7 @@ Path: `~/zdotfiles/zdotfiles-sync`
   - `--no-confirm`: Skip prompts (except with `--delete`)
   - `--only <list>`: Comma-separated or repeated: `config,home,ssh`
   - `--delete`: Delete extra files in destination (always prompts)
+  - `--clean-ignored`: After `pull`, remove repo files matched by `.zdotfilesignore`
 
 ## Behavior
 
@@ -25,6 +26,7 @@ Path: `~/zdotfiles/zdotfiles-sync`
 - Push (repo → home): copies all items found under `.config`, `homeDir`, `.ssh` recursively.
 - Pull (home → repo): only syncs immediate entries that already exist in repo; for any directory entry, pull recursively to all depths.
 - `--delete`: prunes extra files on the destination side for the selected sections/items; always prompts for confirmation.
+- `--clean-ignored`: after pull, cleans ignored files from the repo using `.zdotfilesignore` only; it never deletes from home.
 
 ## Examples
 
@@ -36,6 +38,9 @@ Path: `~/zdotfiles/zdotfiles-sync`
 
 - Pull and prune extras in repo to match home (will always prompt):
   `~/zdotfiles/zdotfiles-sync pull --delete`
+
+- Pull, then clean generated files from the repo using `.zdotfilesignore`:
+  `~/zdotfiles/zdotfiles-sync pull --clean-ignored`
 
 - Non-interactive push of all sections:
   `~/zdotfiles/zdotfiles-sync push --no-confirm`

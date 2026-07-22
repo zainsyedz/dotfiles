@@ -11,3 +11,5 @@ export ZSH="$HOME/.oh-my-zsh"
 export PATH="$HOME/.npm-packages/bin:$PATH"
 export PATH=$PATH:~/.cargo/bin/
 export PATH=$PATH:~/.local/bin/
+export PATH="$HOME/.local/share/nvim/mason/bin:$PATH"
+export ATAC_KEY_BINDINGS="$HOME/.config/atac/z-likes.toml"

@@ -1,0 +1,67 @@
+onboarding = false
+[ui.toast]
+delivery = "herdr"
+
+[keys]
+prefix = "ctrl+s"
+goto = "prefix+tab"
+# focus_pane_left = ["prefix+h", "ctrl+h"]
+# focus_pane_down = ["prefix+j", "ctrl+j"]
+# focus_pane_up = ["prefix+k", "ctrl+k"]
+# focus_pane_right = ["prefix+l", "ctrl+l"]
+split_vertical = ["prefix+v", "prefix+%"]
+split_horizontal = ["prefix+minus", "prefix+\""]
+
+[[keys.command]]
+key = "prefix+ctrl+n"
+type = "popup"
+command = "/home/zain/.config/herdr/scripts/new-workspace"
+width = "20%"
+height = "10%"
+description = "create named workspace"
+
+[[keys.command]]
+key = "prefix+l"
+type = "popup"
+command = "lazygit"
+width = "95%"
+height = "95%"
+description = "open lazygit popup"
+
+[[keys.command]]
+key = "ctrl+h"
+type = "plugin_action"
+command = "vim-herdr-navigation.left"
+description = "navigate left (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "plugin_action"
+command = "vim-herdr-navigation.down"
+description = "navigate down (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+k"
+type = "plugin_action"
+command = "vim-herdr-navigation.up"
+description = "navigate up (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "plugin_action"
+command = "vim-herdr-navigation.right"
+description = "navigate right (vim/herdr)"
+
+[ui]
+agent_panel_sort = "spaces"
+pane_borders = true
+pane_gaps = false
+
+show_agent_labels_on_pane_borders = true
+[theme]
+name = "terminal"
+auto_switch = false
+
+[experimental]
+switch_ascii_input_source_in_prefix = false
+pane_history = false

@@ -1,0 +1,2 @@
+-- Extra environment variables go here, for example:
+-- hl.env("MY_GLOBAL_ENV", "setting")

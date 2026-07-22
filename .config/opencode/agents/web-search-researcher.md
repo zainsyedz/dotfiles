@@ -1,7 +1,7 @@
 ---
 description: Used to perform web searches from a URL and analyze the contents based on a query.
 mode: subagent
-model: opencode/grok-code
+model: kimi-for-coding/kimi-for-coding
 temperature: 0.1
 tools:
   read: true

@@ -18,6 +18,6 @@ if [ "$LID_STATE" = "closed" ]; then
         systemctl suspend
     fi
 else
-    # Lid is open - reload config to restore custom monitor settings (scale, position, etc.)
-    hyprctl reload
+    # Lid is open - re-enable internal display
+    hyprctl keyword monitor "eDP-1,preferred,0x0,1.33"
 fi

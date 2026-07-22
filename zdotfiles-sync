@@ -8,6 +8,7 @@ set -euo pipefail
 #   --no-confirm      Skip confirmation prompts (EXCEPT when --delete is used)
 #   --only <list>     Comma-separated or repeated: config,home,ssh
 #   --delete          Delete extra files in destination to match source
+#   --clean-ignored   After pull, remove repo files matched by .zdotfilesignore
 #   --help            Show usage
 #
 # Behavior:
@@ -21,6 +22,7 @@ set -euo pipefail
 #   All found ignore files are applied; patterns are excluded from being pulled.
 # - --delete prunes extras on the destination side within the scope of items being synced.
 #   It ALWAYS requires a prompt, even with --no-confirm.
+# - --clean-ignored only applies to pull and only cleans the repo destination.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOME_DIR="${HOME}"
@@ -37,6 +39,7 @@ CMD=""
 DRY_RUN=0
 NO_CONFIRM=0
 WANT_DELETE=0
+CLEAN_IGNORED=0
 # Ignore files to check (in order of precedence)
 IGNORE_FILES=(".zdotfilesignore" ".ignore" ".gitignore")
 # sections default to all unless --only provided
@@ -51,12 +54,14 @@ Options:
   --no-confirm        Skip confirmation prompts (EXCEPT when --delete is used)
   --only <list>       Comma-separated or repeated: config,home,ssh
   --delete            Delete extra files in destination to match source
+  --clean-ignored     After pull, remove repo files matched by .zdotfilesignore
   --help              Show this help
 
 Notes:
 - Uses rsync only; will exit if rsync is not installed.
 - Pull is depth-1 gated: only entries already present in repo sections are synced back.
 - During pull, respects ignore files: .zdotfilesignore, .ignore, .gitignore (all applied).
+- --clean-ignored only cleans the repo destination and never deletes from home.
 - SSH excludes private keys (id_*, *.pem, *.key) in both directions; id_*.pub allowed.
 - --delete always requires a prompt regardless of --no-confirm.
 EOF
@@ -99,6 +104,7 @@ parse_args() {
         add_only_sections "$2"; shift 2 ;;
       --only=*) add_only_sections "${1#*=}"; shift ;;
       --delete) WANT_DELETE=1; shift ;;
+      --clean-ignored) CLEAN_IGNORED=1; shift ;;
       -h|--help) usage; exit 0 ;;
       *) echo "Unknown option: $1" >&2; usage; exit 2 ;;
     esac
@@ -107,6 +113,23 @@ parse_args() {
   # If no --only provided, select all
   if [[ ${#ONLY_SECTIONS[@]} -eq 0 ]]; then
     ONLY_SECTIONS=(config home ssh)
+  fi
+
+  if [[ "$CLEAN_IGNORED" -eq 1 && "$CMD" != "pull" ]]; then
+    echo "--clean-ignored can only be used with pull" >&2
+    exit 2
+  fi
+}
+
+confirm_clean_ignored_if_needed() {
+  if [[ "$CLEAN_IGNORED" -ne 1 || "$DRY_RUN" -eq 1 ]]; then
+    return
+  fi
+  local ans
+  read -r -p "Remove repo files matched by .zdotfilesignore? [y/N] " ans || true
+  if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+    echo "Skipped ignored-file cleanup."
+    CLEAN_IGNORED=0
   fi
 }
 
@@ -262,6 +285,80 @@ preview_or_delete_missing() {
   else
     echo "Skip (source missing): $path"
   fi
+}
+
+clean_ignored_dir() {
+  local root="$1"
+  local preview_flag="$2"
+  local ignore_file="$root/.zdotfilesignore"
+
+  [[ -d "$root" && -f "$ignore_file" ]] || return 0
+
+  echo "[clean ignored] $root using $ignore_file"
+  while IFS= read -r pattern || [[ -n "$pattern" ]]; do
+    pattern="${pattern%%#*}"
+    pattern="${pattern%$'\r'}"
+    [[ -n "$pattern" ]] || continue
+    [[ "$pattern" == !* ]] && continue
+    pattern="${pattern#/}"
+
+    if [[ "$pattern" == */ ]]; then
+      local dir_pattern="${pattern%/}"
+      local find_args=(-type d -path "$root/$dir_pattern")
+      if [[ "$dir_pattern" != */* ]]; then
+        find_args=(-type d -name "$dir_pattern")
+      fi
+      while IFS= read -r -d '' target; do
+        if [[ "$preview_flag" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
+          echo "Would remove ignored: $target"
+        else
+          echo "Removing ignored: $target"
+          rm -rf -- "$target"
+        fi
+      done < <(find "$root" "${find_args[@]}" -print0 2>/dev/null)
+    elif [[ "$pattern" == */* ]]; then
+      while IFS= read -r -d '' target; do
+        if [[ "$preview_flag" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
+          echo "Would remove ignored: $target"
+        else
+          echo "Removing ignored: $target"
+          rm -rf -- "$target"
+        fi
+      done < <(find "$root" -path "$root/$pattern" -print0 2>/dev/null)
+    else
+      while IFS= read -r -d '' target; do
+        if [[ "$preview_flag" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
+          echo "Would remove ignored: $target"
+        else
+          echo "Removing ignored: $target"
+          rm -rf -- "$target"
+        fi
+      done < <(find "$root" -name "$pattern" -print0 2>/dev/null)
+    fi
+  done < "$ignore_file"
+}
+
+run_clean_ignored() {
+  local preview_flag="$1"
+  [[ "$CLEAN_IGNORED" -eq 1 ]] || return 0
+
+  echo "== Cleaning ignored repo files (.zdotfilesignore only) =="
+  for section in "${ONLY_SECTIONS[@]}"; do
+    case "$section" in
+      config)
+        while IFS= read -r name; do
+          [[ -d "$REPO_CONFIG/$name" ]] || continue
+          clean_ignored_dir "$REPO_CONFIG/$name" "$preview_flag"
+        done < <(list_children "$REPO_CONFIG")
+        ;;
+      home)
+        clean_ignored_dir "$REPO_HOME" "$preview_flag"
+        ;;
+      ssh)
+        clean_ignored_dir "$REPO_SSH" "$preview_flag"
+        ;;
+    esac
+  done
 }
 
 # Harden permissions for ~/.ssh after push
@@ -509,12 +606,14 @@ main() {
   esac
 
   if [[ "$DRY_RUN" -eq 1 ]]; then
+    run_clean_ignored 1
     echo "(dry-run) No changes made."
     exit 0
   fi
 
   # Prompt: --delete always prompts; otherwise skip if --no-confirm
   confirm_if_needed
+  confirm_clean_ignored_if_needed
 
   case "$CMD" in
     push)
@@ -522,6 +621,7 @@ main() {
       ;;
     pull)
       run_pull_actual
+      run_clean_ignored 0
       ;;
   esac
 
