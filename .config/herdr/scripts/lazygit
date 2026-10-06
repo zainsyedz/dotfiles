@@ -3,8 +3,6 @@ set -euo pipefail
 
 resolve_herdr_bin() {
   local candidate="${HERDR_BIN_PATH:-}"
-  # After an update the server's /proc/self/exe (which seeds HERDR_BIN_PATH)
-  # can look like "/usr/bin/herdr (deleted)". Strip that suffix.
   candidate="${candidate% (deleted)}"
   if [ -n "$candidate" ] && [ -x "$candidate" ]; then
     printf '%s\n' "$candidate"
@@ -24,16 +22,10 @@ resolve_herdr_bin() {
 }
 herdr_bin="$(resolve_herdr_bin)"
 
-choice="$(
-  "$herdr_bin" workspace list \
-    | jq -r '.result.workspaces[] | select(.focused != true) | [.label, .workspace_id] | @tsv' \
-    | fzf --reverse --prompt='Workspace: ' --delimiter=$'\t' --with-nth=1
-)"
-
-if [ -z "$choice" ]; then
-  exit 0
+cwd=$("$herdr_bin" pane current 2>/dev/null | jq -r '.result.pane.foreground_cwd // .result.pane.cwd // empty')
+if [ -z "$cwd" ] || [ ! -d "$cwd" ]; then
+  cwd=${PWD:-$HOME}
 fi
 
-IFS=$'\t' read -r _label workspace_id <<< "$choice"
-
-exec "$herdr_bin" workspace focus "$workspace_id"
+cd "$cwd"
+exec lazygit

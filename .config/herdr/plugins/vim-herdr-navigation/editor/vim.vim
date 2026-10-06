@@ -14,7 +14,11 @@ if empty($HERDR_PANE_ID)
 endif
 
 function! s:HerdrFocus(dir) abort
-  let l:herdr = empty($HERDR_BIN_PATH) ? 'herdr' : $HERDR_BIN_PATH
+  " After an update $HERDR_BIN_PATH can be "/usr/bin/herdr (deleted)".
+  let l:herdr = empty($HERDR_BIN_PATH) ? 'herdr' : substitute($HERDR_BIN_PATH, ' (deleted)$', '', '')
+  if empty(l:herdr) || !executable(l:herdr)
+    let l:herdr = 'herdr'
+  endif
   call system(shellescape(l:herdr) . ' pane focus --direction ' . a:dir . ' --current')
 endfunction
 

@@ -17,7 +17,28 @@
 set -euo pipefail
 
 dir="${1:?usage: navigate.sh <left|down|up|right>}"
-herdr="${HERDR_BIN_PATH:-herdr}"
+resolve_herdr_bin() {
+  local candidate="${HERDR_BIN_PATH:-}"
+  # After an update the server's /proc/self/exe (which seeds HERDR_BIN_PATH)
+  # can look like "/usr/bin/herdr (deleted)". Strip that suffix.
+  candidate="${candidate% (deleted)}"
+  if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+  if command -v herdr >/dev/null 2>&1; then
+    command -v herdr
+    return 0
+  fi
+  for p in /usr/bin/herdr "$HOME/.local/bin/herdr"; do
+    if [ -x "$p" ]; then
+      printf '%s\n' "$p"
+      return 0
+    fi
+  done
+  printf '%s\n' "${candidate:-herdr}"
+}
+herdr="$(resolve_herdr_bin)"
 pane="${HERDR_PANE_ID:-}"
 
 case "$dir" in

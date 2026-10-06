@@ -20,7 +20,11 @@ local function nav(wincmd, dir)
   -- At a split edge: cross into the surrounding multiplexer.
   if vim.env.HERDR_PANE_ID and vim.env.HERDR_PANE_ID ~= "" then
     local herdr = vim.env.HERDR_BIN_PATH
-    if herdr == nil or herdr == "" then
+    -- After an update HERDR_BIN_PATH can be "/usr/bin/herdr (deleted)".
+    if herdr then
+      herdr = herdr:gsub(" %(deleted%)$", "")
+    end
+    if herdr == nil or herdr == "" or vim.fn.executable(herdr) == 0 then
       herdr = "herdr"
     end
     vim.fn.system({ herdr, "pane", "zoom", "--current", "--off" })

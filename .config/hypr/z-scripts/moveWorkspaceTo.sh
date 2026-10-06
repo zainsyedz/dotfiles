@@ -55,4 +55,4 @@ next_monitor_id=$(get_next_monitor)
 log_message "Moving to monitor with ID $next_monitor_id"
 next_monitor=$(hyprctl monitors -j | jq -r ".[] | select(.id == $next_monitor_id) | .name")
 log_message "Moving to monitor with name $next_monitor"
-hyprctl dispatch movecurrentworkspacetomonitor "$next_monitor"
+hyprctl dispatch "hl.dsp.workspace.move({ monitor = \"$next_monitor\" })"

@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
+
+resolve_herdr_bin() {
+  local candidate="${HERDR_BIN_PATH:-}"
+  candidate="${candidate% (deleted)}"
+  if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+  if command -v herdr >/dev/null 2>&1; then
+    command -v herdr
+    return 0
+  fi
+  for p in /usr/bin/herdr "$HOME/.local/bin/herdr"; do
+    if [ -x "$p" ]; then
+      printf '%s\n' "$p"
+      return 0
+    fi
+  done
+  printf '%s\n' "${candidate:-herdr}"
+}
+herdr_bin="$(resolve_herdr_bin)"
 
 read -r -p "Workspace name: " name
 
@@ -7,4 +28,16 @@ if [ -z "${name//[[:space:]]/}" ]; then
   exit 0
 fi
 
-exec herdr workspace create --label "$name" --cwd "$PWD" --focus
+result=$("$herdr_bin" workspace create --label "$name" --cwd "${PWD:-$HOME}" --focus 2>&1)
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  printf '%s\n' "$result" >&2
+  sleep 5
+  exit "$status"
+fi
+
+workspace_id=$(jq -r '.result.workspace.workspace_id // empty' <<< "$result")
+if [ -n "$workspace_id" ]; then
+  "$herdr_bin" workspace focus "$workspace_id" >/dev/null 2>&1 || true
+fi

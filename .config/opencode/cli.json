@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "system"
+  },
+  "keybinds": {
+    "session.page.up": "ctrl+b",
+    "session.page.down": "ctrl+f"
+  },
+  "session": {
+    "permissions": "autoaccept"
+  },
+  "animations": true
+}

@@ -1,16 +1,25 @@
 onboarding = false
 [ui.toast]
-delivery = "herdr"
+delivery = "system"
 
 [keys]
 prefix = "ctrl+s"
-goto = "prefix+tab"
+# Keep native cross-machine navigation on prefix+w; use fzf on prefix+tab.
+workspace_picker = "prefix+w"
 # focus_pane_left = ["prefix+h", "ctrl+h"]
 # focus_pane_down = ["prefix+j", "ctrl+j"]
 # focus_pane_up = ["prefix+k", "ctrl+k"]
 # focus_pane_right = ["prefix+l", "ctrl+l"]
 split_vertical = ["prefix+v", "prefix+%"]
 split_horizontal = ["prefix+minus", "prefix+\""]
+
+[[keys.command]]
+key = "prefix+tab"
+type = "popup"
+command = "/home/zain/.config/herdr/scripts/switch-workspace"
+width = "20%"
+height = "50%"
+description = "switch workspace"
 
 [[keys.command]]
 key = "prefix+ctrl+n"
@@ -23,7 +32,7 @@ description = "create named workspace"
 [[keys.command]]
 key = "prefix+l"
 type = "popup"
-command = "lazygit"
+command = "/home/zain/.config/herdr/scripts/lazygit"
 width = "95%"
 height = "95%"
 description = "open lazygit popup"
@@ -53,11 +62,12 @@ command = "vim-herdr-navigation.right"
 description = "navigate right (vim/herdr)"
 
 [ui]
-agent_panel_sort = "spaces"
+agent_panel_sort = "priority"
 pane_borders = true
 pane_gaps = false
 
 show_agent_labels_on_pane_borders = true
+status_indicators = "symbols"
 [theme]
 name = "terminal"
 auto_switch = false
@@ -65,3 +75,6 @@ auto_switch = false
 [experimental]
 switch_ascii_input_source_in_prefix = false
 pane_history = false
+
+[ui.sound]
+enabled = true
